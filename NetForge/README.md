@@ -171,15 +171,15 @@ chmod +x scripts/run_bench.sh
 Sample output on a 4-core laptop:
 
 ```
-═══════════════════════ Results ══════════════════════════
-  Clients     : 50
-  Duration    : 10s
-  Total reqs  : 1 243 800
-  Throughput  : 124 380 req/s
-  Latency p50 : 38 µs
-  Latency p90 : 71 µs
-  Latency p99 : 190 µs
-══════════════════════════════════════════════════════════
+════════════════════ Results ════════════════════
+  Clients    : 50
+  Duration   : 10s
+  Total reqs : 1964148
+  Throughput : 196415 req/s
+  p50 latency: 23 µs
+  p90 latency: 61 µs
+  p99 latency: 510 µs
+═════════════════════════════════════════════════
 ```
 
 ---
@@ -195,8 +195,8 @@ Type erasure lets any callable be queued without the queue knowing the work's si
 ### Why edge-triggered epoll?
 Level-triggered epoll would fire repeatedly until the buffer is drained — wasted syscalls.  Edge-triggered fires once per edge; the handler loops until `EAGAIN`, which is correct for non-blocking sockets and maximises throughput.
 
-### Why `eventfd` for shutdown?
-`stop()` must be async-signal-safe (callable from a signal handler).  Writing a single byte to an `eventfd` is signal-safe and immediately wakes the `epoll_wait` without polling overhead.
+### Why a wake pipe for shutdown?
+`stop()` must be async-signal-safe (callable from a signal handler). Two connected loopback sockets form a cross-platform "pipe": `stop()` writes one byte to the write end, which immediately wakes `epoll_wait` on the read end without polling overhead. This approach works identically on Linux and Windows, unlike `eventfd` (Linux-only) or `pipe` (not available on Winsock).
 
 ### Move-only `Socket`
 Copying a socket fd would double-close on destruction, corrupting another fd that reused the same number.  Move semantics make ownership explicit: a moved-from `Socket` holds `-1` and its destructor does nothing.
