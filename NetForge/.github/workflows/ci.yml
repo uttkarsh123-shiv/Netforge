@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build & Test (Ubuntu / GCC-13)
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            cmake ninja-build gcc-13 g++-13 \
+            libasan6 libubsan1
+
+      - name: Configure (Debug + ASan/UBSan)
+        env:
+          CC:  gcc-13
+          CXX: g++-13
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DNETFORGE_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run unit tests
+        working-directory: build
+        run: ctest --output-on-failure --timeout 60
+
+  build-release:
+    name: Release Build
+    runs-on: ubuntu-24.04
+    needs: build-and-test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CMake & Ninja
+        run: sudo apt-get update -y && sudo apt-get install -y cmake ninja-build gcc-13 g++-13
+
+      - name: Configure (Release)
+        env:
+          CC:  gcc-13
+          CXX: g++-13
+        run: |
+          cmake -S . -B build-release \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DNETFORGE_BUILD_TESTS=OFF
+
+      - name: Build
+        run: cmake --build build-release --parallel
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: netforge-linux-x86_64
+          path: |
+            build-release/netforge
+            build-release/netforge_client
+            build-release/netforge_bench
