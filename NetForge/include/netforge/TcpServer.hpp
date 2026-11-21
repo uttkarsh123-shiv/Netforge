@@ -82,7 +82,9 @@ public:
 #ifdef _WIN32
         ::send(static_cast<SOCKET>(wakePipeWrite_), &byte, 1, 0);
 #else
-        ::write(wakePipeWrite_, &byte, 1);
+        if (::write(wakePipeWrite_, &byte, 1) == -1) {
+            // Best-effort wake; if this fails the poll timeout will still exit.
+        }
 #endif
     }
 
