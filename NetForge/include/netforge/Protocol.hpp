@@ -21,6 +21,7 @@
  * translates strings, keeping it unit-testable without networking.
  */
 
+#include <cctype>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
@@ -75,19 +76,26 @@ inline std::string currentIso8601() {
 // statsJson is provided by the server so Protocol stays pure.
 inline Response dispatch(const Request& req,
                          const std::string& statsJson = "{}") {
-    if (req.command == "PING") {
+    // Normalise to uppercase so "ping", "Ping", "PING" all work
+    std::string cmd = req.command;
+    for (auto& c : cmd) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+
+    if (cmd == "PING") {
         return {"PONG\n"};
     }
-    if (req.command == "ECHO") {
+    if (cmd == "ECHO") {
         return {req.args + "\n"};
     }
-    if (req.command == "TIME") {
+    if (cmd == "TIME") {
         return {currentIso8601() + "\n"};
     }
-    if (req.command == "STATS") {
+    if (cmd == "STATS") {
         return {statsJson + "\n"};
     }
-    if (req.command == "QUIT") {
+    if (cmd == "HELP") {
+        return {"Commands: PING | ECHO <msg> | TIME | STATS | QUIT\n"};
+    }
+    if (cmd == "QUIT") {
         return {"BYE\n", true};
     }
     return {"ERROR unknown command: " + req.command + "\n"};
