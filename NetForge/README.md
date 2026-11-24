@@ -72,7 +72,7 @@ Each incoming connection is accepted on the epoll loop and immediately dispatche
 | **Memory safety** | RAII `Socket` and `EpollPoller`, move-only ownership, no raw `new`/`delete` |
 | **Smart pointers** | `shared_ptr<ConnectionInfo>` shared between server and connection registry |
 | **Templates** | `ThreadPool::submit<F, Args...>()` returning `std::future<ReturnType>` |
-| **Protocol** | Case-insensitive line-delimited: `PING` `ECHO` `TIME` `STATS` `HELP` `QUIT` |
+| **Protocol** | Case-insensitive line-delimited: `PING` `ECHO` `TIME` `STATS` `VERSION` `UPTIME` `CONNECTIONS` `WHOAMI` `REPEAT` `HELP` `QUIT` |
 | **Graceful shutdown** | Wake pipe unblocks `epoll_wait`; thread pool drains then joins all workers |
 | **Observability** | Thread-safe timestamped logger; `STATS` returns live JSON metrics |
 | **Testing** | GoogleTest unit tests for every core component |
@@ -106,7 +106,7 @@ In a second terminal:
 ```
 
 ```
-Connected to 127.0.0.1:8080  (PING / ECHO <msg> / TIME / STATS / HELP / QUIT)
+Connected to 127.0.0.1:8080  (PING / ECHO <msg> / TIME / STATS / VERSION / UPTIME / CONNECTIONS / WHOAMI / REPEAT <n> <msg> / HELP / QUIT)
 > PING
 PONG
 > ECHO NetForge works!
@@ -115,8 +115,20 @@ NetForge works!
 2026-11-21T15:18:33Z
 > STATS
 {"workers":4,"queued":0,"active":1,"completed":42,"connections":1}
+> VERSION
+NetForge 1.0.0
+> UPTIME
+0h 2m 14s
+> CONNECTIONS
+1
+> WHOAMI
+127.0.0.1:54321
+> REPEAT 3 hello
+hello
+hello
+hello
 > HELP
-Commands: PING | ECHO <msg> | TIME | STATS | QUIT
+Commands: PING | ECHO <msg> | TIME | STATS | VERSION | UPTIME | CONNECTIONS | WHOAMI | REPEAT <n> <msg> | QUIT
 > QUIT
 BYE
 ```
@@ -126,6 +138,26 @@ Or with `nc`:
 ```bash
 echo "PING" | nc 127.0.0.1 8080
 ```
+
+---
+
+## Commands
+
+| Command | Response |
+|---------|----------|
+| `PING` | `PONG` |
+| `ECHO <msg>` | echoes `<msg>` back |
+| `TIME` | current UTC time in ISO-8601 format |
+| `STATS` | live JSON — workers, queued tasks, active tasks, connections |
+| `VERSION` | `NetForge 1.0.0` |
+| `UPTIME` | time since server started (e.g. `0h 5m 30s`) |
+| `CONNECTIONS` | current active connection count |
+| `WHOAMI` | your IP and port (e.g. `127.0.0.1:54321`) |
+| `REPEAT <n> <msg>` | prints `<msg>` exactly `<n>` times (max 100) |
+| `HELP` | lists all available commands |
+| `QUIT` | closes the connection cleanly |
+
+Commands are case-insensitive — `ping`, `Ping`, and `PING` all work.
 
 ---
 
