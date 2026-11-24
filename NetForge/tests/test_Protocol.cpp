@@ -57,7 +57,9 @@ TEST(Protocol, TimeReturnsNonEmpty) {
 
 TEST(Protocol, StatsReturnsJson) {
     std::string json = R"({"workers":4})";
-    auto resp = dispatch({"STATS", {}}, json);
+    ServerContext ctx;
+    ctx.statsJson = json;
+    auto resp = dispatch({"STATS", {}}, ctx);
     EXPECT_EQ(resp.body, json + "\n");
 }
 

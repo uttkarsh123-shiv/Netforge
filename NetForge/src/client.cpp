@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 #endif
 
     std::cout << "Connected to " << host << ':' << port
-              << "  (PING / ECHO <msg> / TIME / STATS / HELP / QUIT)\n> " << std::flush;
+              << "  (PING / ECHO <msg> / TIME / STATS / VERSION / UPTIME / CONNECTIONS / WHOAMI / REPEAT <n> <msg> / HELP / QUIT)\n> " << std::flush;
 
     char respBuf[4096];
     std::string line;

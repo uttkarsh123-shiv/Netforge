@@ -23,6 +23,7 @@
 #include "ThreadPool.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
@@ -41,6 +42,7 @@ public:
     explicit TcpServer(ServerConfig cfg)
         : cfg_(cfg)
         , pool_(cfg.workerThreads)
+        , startTime_(std::chrono::steady_clock::now())
     {
         setupListenSocket();
         setupWakePipe();
@@ -88,18 +90,28 @@ public:
 #endif
     }
 
-    [[nodiscard]] std::string statsJson() const {
+    [[nodiscard]] protocol::ServerContext makeContext(const std::string& clientAddr) const {
         auto s     = pool_.stats();
         auto conns = manager_.count();
+        auto uptime = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - startTime_).count();
+
         std::ostringstream oss;
         oss << "{"
-            << "\"workers\":"    << s.workerCount   << ","
-            << "\"queued\":"     << s.queuedTasks    << ","
-            << "\"active\":"     << s.activeTasks    << ","
-            << "\"completed\":"  << s.completedTasks << ","
+            << "\"workers\":"     << s.workerCount    << ","
+            << "\"queued\":"      << s.queuedTasks     << ","
+            << "\"active\":"      << s.activeTasks     << ","
+            << "\"completed\":"   << s.completedTasks  << ","
             << "\"connections\":" << conns
             << "}";
-        return oss.str();
+
+        return {oss.str(), clientAddr, conns,
+                static_cast<uint64_t>(uptime)};
+    }
+
+    // Keep old statsJson() for external callers (e.g. tests)
+    [[nodiscard]] std::string statsJson() const {
+        return makeContext("").statsJson;
     }
 
 private:
@@ -251,7 +263,9 @@ private:
 
                 std::string_view line(recvBuf.data() + pos, nl - pos + 1);
                 auto req  = protocol::parse(line);
-                auto resp = protocol::dispatch(req, statsJson());
+                std::string clientAddr = info->remoteAddr + ":" +
+                                         std::to_string(info->remotePort);
+                auto resp = protocol::dispatch(req, makeContext(clientAddr));
 
                 info->requestsHandled.fetch_add(1, std::memory_order_relaxed);
 
@@ -281,6 +295,7 @@ private:
     ThreadPool        pool_;
     ConnectionManager manager_;
     std::atomic<bool> running_{false};
+    std::chrono::steady_clock::time_point startTime_;
 };
 
 } // namespace netforge
