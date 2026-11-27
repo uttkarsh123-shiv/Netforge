@@ -24,7 +24,10 @@
   using ssize_t  = SSIZE_T;
   using socklen_t = int;
 
-  // Map POSIX error names to Winsock equivalents
+  // Map POSIX error names to Winsock equivalents (guard against MinGW redefines)
+  #undef EWOULDBLOCK
+  #undef EAGAIN
+  #undef EINTR
   #define EWOULDBLOCK WSAEWOULDBLOCK
   #define EAGAIN      WSAEWOULDBLOCK
   #define EINTR       WSAEINTR
@@ -51,6 +54,7 @@
 #endif
 
 #include <string>
+#include <stdexcept>
 
 namespace netforge {
 

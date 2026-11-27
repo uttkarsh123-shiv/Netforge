@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
             if      (level == "debug") log.setLevel(netforge::LogLevel::DEBUG);
             else if (level == "info")  log.setLevel(netforge::LogLevel::INFO);
             else if (level == "warn")  log.setLevel(netforge::LogLevel::WARN);
-            else if (level == "error") log.setLevel(netforge::LogLevel::ERROR);
+            else if (level == "error") log.setLevel(netforge::LogLevel::ERR);
             else { std::cerr << "Unknown log level: " << level << '\n'; return 1; }
         } else {
             std::cerr << "Unknown argument: " << arg << " (try --help)\n";

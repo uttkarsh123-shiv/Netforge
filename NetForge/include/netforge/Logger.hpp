@@ -16,7 +16,7 @@
 
 namespace netforge {
 
-enum class LogLevel { DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3 };
+enum class LogLevel { DEBUG = 0, INFO = 1, WARN = 2, ERR = 3 };
 
 class Logger {
 public:
@@ -45,7 +45,7 @@ public:
     template <typename... Args> void debug(Args&&... args) { log(LogLevel::DEBUG, std::forward<Args>(args)...); }
     template <typename... Args> void info (Args&&... args) { log(LogLevel::INFO,  std::forward<Args>(args)...); }
     template <typename... Args> void warn (Args&&... args) { log(LogLevel::WARN,  std::forward<Args>(args)...); }
-    template <typename... Args> void error(Args&&... args) { log(LogLevel::ERROR, std::forward<Args>(args)...); }
+    template <typename... Args> void error(Args&&... args) { log(LogLevel::ERR, std::forward<Args>(args)...); }
 
 private:
     Logger() = default;
@@ -75,7 +75,7 @@ private:
             case LogLevel::DEBUG: return "DEBUG";
             case LogLevel::INFO:  return "INFO ";
             case LogLevel::WARN:  return "WARN ";
-            case LogLevel::ERROR: return "ERROR";
+            case LogLevel::ERR:   return "ERROR";
         }
         return "?????";
     }

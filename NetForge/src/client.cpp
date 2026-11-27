@@ -7,6 +7,7 @@
 
 #include "netforge/Platform.hpp"
 
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <cstdio>
