@@ -139,7 +139,7 @@ inline Response dispatch(const Request& req,
     }
     if (cmd == "HELP") {
         return {"Commands: PING | ECHO <msg> | TIME | STATS | VERSION | "
-                "UPTIME | CONNECTIONS | WHOAMI | REPEAT <n> <msg> | QUIT\n"};
+                "UPTIME | CONNECTIONS | WHOAMI | REPEAT <n> <msg> | HELP | QUIT\n"};
     }
     if (cmd == "QUIT") {
         return {"BYE\n", true};
